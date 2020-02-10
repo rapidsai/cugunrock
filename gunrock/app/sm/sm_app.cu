@@ -62,9 +62,9 @@ double sm(
     const int            num_runs,
           int           *subgraphs)
 {
-    return sm(num_nodes, num_edges, row_offsets, col_indices,
+    return sm_template(num_nodes, num_edges, row_offsets, col_indices,
         num_query_nodes, num_query_edges, query_row_offsets,
-        query_col_indices, 1 /* num_runs */, subgraphs);
+        query_col_indices, num_runs, subgraphs);
 }
 
 // Leave this at the end of the file
