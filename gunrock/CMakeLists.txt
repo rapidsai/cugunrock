@@ -29,7 +29,7 @@ set(HFILES_PUBLIC
 set(CUFILES
   # TODO: Add support for remaining primitives
   ##app/bfs/bfs_app.cu
-  #app/bc/bc_app.cu
+  app/bc/bc_app.cu
   ##app/cc/cc_app.cu
   app/pr/pr_app.cu
   app/hits/hits_app.cu

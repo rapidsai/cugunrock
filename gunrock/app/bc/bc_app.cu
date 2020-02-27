@@ -113,6 +113,32 @@ cudaError_t RunTests(util::Parameters &parameters, GraphT &graph,
   for (int run_num = 0; run_num < num_runs; ++run_num) {
     auto run_index = run_num % num_srcs;
     src = srcs[run_index];
+
+#if 1
+    if (src == -1) {
+        for (src = 0 ; src < graph.nodes ; ++src) {
+            GUARD_CU(problem.Reset(src, target));
+            GUARD_CU(enactor.Reset(src, target));
+
+            std::cout << "enact: " << src << std::endl;
+
+            cpu_timer.Start();
+            GUARD_CU(enactor.Enact(src));
+            cpu_timer.Stop();
+
+            info.CollectSingleRun(cpu_timer.ElapsedMillis());
+        }
+    } else {
+        GUARD_CU(problem.Reset(src, target));
+        GUARD_CU(enactor.Reset(src, target));
+
+        cpu_timer.Start();
+        GUARD_CU(enactor.Enact(src));
+        cpu_timer.Stop();
+
+        info.CollectSingleRun(cpu_timer.ElapsedMillis());
+    }
+#else
     GUARD_CU(problem.Reset(src, target));
     GUARD_CU(enactor.Reset(src, target));
     util::PrintMsg("__________________________", !quiet_mode);
@@ -121,6 +147,7 @@ cudaError_t RunTests(util::Parameters &parameters, GraphT &graph,
 
     cpu_timer.Stop();
     info.CollectSingleRun(cpu_timer.ElapsedMillis());
+#endif
 
     util::PrintMsg(
         "--------------------------\nRun " + std::to_string(run_num) +
@@ -215,6 +242,32 @@ double gunrock_bc(gunrock::util::Parameters &parameters, GraphT &graph,
   for (int run_num = 0; run_num < num_runs; ++run_num) {
     int src_num = run_num % num_srcs;
     VertexT src = srcs[src_num];
+
+#if 1
+    if (src == -1) {
+        for (src = 0 ; src < graph.nodes ; ++src) {
+            problem.Reset(src, target);
+            enactor.Reset(src, target);
+
+            std::cout << "enact: " << src << std::endl;
+
+            cpu_timer.Start();
+            enactor.Enact(src);
+            cpu_timer.Stop();
+
+            total_time += cpu_timer.ElapsedMillis();
+        }
+    } else {
+        problem.Reset(src, target);
+        enactor.Reset(src, target);
+
+        cpu_timer.Start();
+        enactor.Enact(src);
+        cpu_timer.Stop();
+
+        total_time += cpu_timer.ElapsedMillis();
+    }
+#else
     problem.Reset(src, target);
     enactor.Reset(src, target);
 
@@ -223,6 +276,8 @@ double gunrock_bc(gunrock::util::Parameters &parameters, GraphT &graph,
     cpu_timer.Stop();
 
     total_time += cpu_timer.ElapsedMillis();
+#endif
+    
     problem.Extract(bc_values[src_num], sigmas[src_num], labels[src_num]);
   }
 
@@ -250,7 +305,8 @@ template <typename VertexT = int, typename SizeT = int,
           typename GValueT = float, typename BCValueT = GValueT>
 float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
          const VertexT *col_indices, const int num_runs, VertexT *sources,
-         BCValueT **bc_values, BCValueT **sigmas, VertexT **labels) {
+         BCValueT **bc_values, BCValueT **sigmas, VertexT **labels,
+         gunrock::util::Location target = gunrock::util::HOST) {
   typedef typename gunrock::app::TestGraph<VertexT, SizeT, GValueT,
                                            gunrock::graph::HAS_CSR>
       GraphT;
@@ -272,14 +328,11 @@ float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
   GraphT graph;
 
   // Assign pointers into gunrock graph format
-  CsrT csr;
-  csr.Allocate(num_nodes, num_edges, gunrock::util::HOST);
-  csr.row_offsets.SetPointer((SizeT *)row_offsets, num_nodes + 1,
-                             gunrock::util::HOST);
-  csr.column_indices.SetPointer((VertexT *)col_indices, num_edges,
-                                gunrock::util::HOST);
+  graph.CsrT::Allocate(num_nodes, num_edges, target);
+  graph.CsrT::row_offsets.SetPointer((SizeT *)row_offsets, num_nodes + 1, target);
+  graph.CsrT::column_indices.SetPointer((VertexT *)col_indices, num_edges, target);
 
-  gunrock::graphio::LoadGraph(parameters, graph);
+  graph.FromCsr(graph.csr(), target, 0, quiet, true);
 
   // Run BC
   double elapsed_time =
@@ -305,11 +358,11 @@ float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
  * @param[out] labels      Return label of each vertex
  * \return     double      Return accumulated elapsed times for all runs
  */
-double bc(const int num_nodes, const int num_edges, const int *row_offsets,
+double bc(int num_nodes, int num_edges, const int *row_offsets,
           const int *col_indices, int source, float *bc_values, float *sigmas,
-          int *labels) {
+          int *labels, uint32_t target) {
   return bc(num_nodes, num_edges, row_offsets, col_indices, 1 /* num_runs */,
-            &source, &bc_values, &sigmas, &labels);
+            &source, &bc_values, &sigmas, &labels, target);
 }
 
 // Leave this at the end of the file
