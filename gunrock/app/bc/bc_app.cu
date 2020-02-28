@@ -120,8 +120,6 @@ cudaError_t RunTests(util::Parameters &parameters, GraphT &graph,
             GUARD_CU(problem.Reset(src, target));
             GUARD_CU(enactor.Reset(src, target));
 
-            std::cout << "enact: " << src << std::endl;
-
             cpu_timer.Start();
             GUARD_CU(enactor.Enact(src));
             cpu_timer.Stop();
@@ -248,8 +246,6 @@ double gunrock_bc(gunrock::util::Parameters &parameters, GraphT &graph,
         for (src = 0 ; src < graph.nodes ; ++src) {
             problem.Reset(src, target);
             enactor.Reset(src, target);
-
-            std::cout << "enact: " << src << std::endl;
 
             cpu_timer.Start();
             enactor.Enact(src);

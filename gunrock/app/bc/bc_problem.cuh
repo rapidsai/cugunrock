@@ -415,7 +415,6 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
    * \return cudaError_t Error message(s), if any
    */
   cudaError_t Reset(VertexT src, util::Location target = util::DEVICE) {
-    std::cout << "Problem->Reset(" << src << ")" << std::endl;
     cudaError_t retval = cudaSuccess;
 
     for (int gpu = 0; gpu < this->num_gpus; ++gpu) {
