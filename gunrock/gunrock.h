@@ -223,10 +223,6 @@ void gunrock_bc(struct GRGraph* grapho,        // Output graph / results
  * @param[in] col_indices Input graph col_indices.
  * @param[in] source Source node to start.
  */
-
-const unsigned int Location_HOST = 0x01;
-const unsigned int Location_DEVICE = 0x02;
-    
 double bc(
           int         num_nodes,   // Input graph number of nodes
           int         num_edges,   // Input graph number of edges
@@ -235,8 +231,7 @@ double bc(
           int         source,	   // Source vertex to start
           float      *bc_values,   // Return centrality score per node
           float      *sigmas,
-          int        *labels,
-          unsigned int target);
+          int        *labels);
 
 /**
  * @brief Connected component public interface.

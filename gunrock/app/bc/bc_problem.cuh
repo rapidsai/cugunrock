@@ -187,9 +187,7 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
       }
 
       if (target & util::DEVICE) {
-          std::cout << "in Init, calling move with HOST memory" << std::endl;
-        GUARD_CU(sub_graph.CsrT::Move(source, target, this->stream));
-        //GUARD_CU(sub_graph.CsrT::Move(util::HOST, target, this->stream));
+        GUARD_CU(sub_graph.CsrT::Move(util::HOST, target, this->stream));
       }
 
       return retval;
@@ -312,11 +310,6 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
     if (this->num_gpus == 1) {
       auto &data_slice = data_slices[0][0];
 
-      GUARD_CU(data_slice.bc_values.ForEach(
-                   data_slice.bc_values,
-                   [] __host__ __device__ (const ValueT &x, ValueT &h_x) { h_x *= (ValueT) 0.5; }
-                   nodes, util::DEVICE));
-
       // Set device
       if (target == util::DEVICE) {
         GUARD_CU(util::SetDevice(this->gpu_idx[0]));
@@ -332,11 +325,9 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
         GUARD_CU(data_slice.labels.Move(util::DEVICE, util::HOST));
 
       } else if (target == util::HOST) {
-        // Scale final results by 0.5
-        // YC: ?
         GUARD_CU(data_slice.bc_values.ForEach(
             h_bc_values,
-            [] __host__ __device__(const ValueT &x, ValueT &h_x) { h_x =  0.5 * x; },
+            [] __host__ __device__(const ValueT &x, ValueT &h_x) { h_x =  x; },
             nodes, util::HOST));
 
         GUARD_CU(data_slice.sigmas.ForEach(
@@ -355,11 +346,9 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
 
     // Scale final results by 0.5
     // YC: ?
-#if 0
     for (VertexT v = 0; v < nodes; ++v) {
       h_bc_values[v] *= (ValueT)0.5;
     }
-#endif
 
     // Logging
     // for(VertexT v = 0; v < nodes; ++v) {

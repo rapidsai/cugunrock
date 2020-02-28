@@ -305,8 +305,7 @@ template <typename VertexT = int, typename SizeT = int,
           typename GValueT = float, typename BCValueT = GValueT>
 float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
          const VertexT *col_indices, const int num_runs, VertexT *sources,
-         BCValueT **bc_values, BCValueT **sigmas, VertexT **labels,
-         gunrock::util::Location target = gunrock::util::HOST) {
+         BCValueT **bc_values, BCValueT **sigmas, VertexT **labels) {
   typedef typename gunrock::app::TestGraph<VertexT, SizeT, GValueT,
                                            gunrock::graph::HAS_CSR>
       GraphT;
@@ -328,11 +327,11 @@ float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
   GraphT graph;
 
   // Assign pointers into gunrock graph format
-  graph.CsrT::Allocate(num_nodes, num_edges, target);
-  graph.CsrT::row_offsets.SetPointer((SizeT *)row_offsets, num_nodes + 1, target);
-  graph.CsrT::column_indices.SetPointer((VertexT *)col_indices, num_edges, target);
+  graph.CsrT::Allocate(num_nodes, num_edges, gunrock::util::HOST);
+  graph.CsrT::row_offsets.SetPointer((SizeT *)row_offsets, num_nodes + 1, gunrock::util::HOST);
+  graph.CsrT::column_indices.SetPointer((VertexT *)col_indices, num_edges, gunrock::util::HOST);
 
-  graph.FromCsr(graph.csr(), target, 0, quiet, true);
+  graph.FromCsr(graph.csr(), gunrock::util::HOST, 0, quiet, true);
 
   // Run BC
   double elapsed_time =
@@ -360,9 +359,9 @@ float bc(const SizeT num_nodes, const SizeT num_edges, const SizeT *row_offsets,
  */
 double bc(int num_nodes, int num_edges, const int *row_offsets,
           const int *col_indices, int source, float *bc_values, float *sigmas,
-          int *labels, uint32_t target) {
+          int *labels) {
   return bc(num_nodes, num_edges, row_offsets, col_indices, 1 /* num_runs */,
-            &source, &bc_values, &sigmas, &labels, target);
+            &source, &bc_values, &sigmas, &labels);
 }
 
 // Leave this at the end of the file
