@@ -399,3 +399,12 @@ if(GUNROCK_BUILD_TESTS)
     add_subdirectory(unittests)
   endif(GUNROCK_GOOGLE_TESTS)
 endif(GUNROCK_BUILD_TESTS)
+
+###################################################################################################
+# - install targets -------------------------------------------------------------------------------
+
+install(TARGETS gunrock LIBRARY
+    DESTINATION lib)
+
+install(FILES ${CMAKE_SOURCE_DIR}/gunrock/gunrock.h
+    DESTINATION include/gunrock)
