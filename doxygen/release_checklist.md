@@ -32,8 +32,8 @@ This instruction is after the coding phase. First make sure that the code for th
   
   `git add -f ./version_number/* && git commit -am "updated docs" && git push origin gh-pages`
   
-- Sync dev with master
-  `git checkout master`
+- Sync dev with main
+  `git checkout main`
   
   `git pull origin dev`
   
@@ -43,7 +43,7 @@ This instruction is after the coding phase. First make sure that the code for th
   
   `git pull`
   
-  `git push origin master`
+  `git push origin main`
   
 - Create the release tag and new release.
 
