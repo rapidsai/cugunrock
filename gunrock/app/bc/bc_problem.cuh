@@ -157,16 +157,19 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
      * \return    cudaError_t Error message(s), if any
      */
     cudaError_t Init(GraphT &sub_graph, int num_gpus = 1, int gpu_idx = 0,
+                     util::Location source = util::HOST,
                      util::Location target = util::DEVICE,
                      ProblemFlag flag = Problem_None) {
       cudaError_t retval = cudaSuccess;
 
       GUARD_CU(BaseDataSlice::Init(sub_graph, num_gpus, gpu_idx, target, flag));
 
-      GUARD_CU(labels.Allocate(sub_graph.nodes, target | util::HOST));
+      //GUARD_CU(labels.Allocate(sub_graph.nodes, target | util::HOST));
+      GUARD_CU(labels.Allocate(sub_graph.nodes, target));
       GUARD_CU(preds.Allocate(sub_graph.nodes, target));
       GUARD_CU(bc_values.Allocate(sub_graph.nodes, target));
-      GUARD_CU(sigmas.Allocate(sub_graph.nodes, target | util::HOST));
+      //GUARD_CU(sigmas.Allocate(sub_graph.nodes, target | util::HOST));
+      GUARD_CU(sigmas.Allocate(sub_graph.nodes, target));
       GUARD_CU(deltas.Allocate(sub_graph.nodes, target));
 
       GUARD_CU(bc_values.ForEach(
@@ -220,9 +223,11 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
           nodes, target, this->stream));
 
       // ?? Do I actually want to be resetting this?
+#if 0
       GUARD_CU(bc_values.ForEach(
           [] __host__ __device__(ValueT & x) { x = (ValueT)0.0; }, nodes,
           target, this->stream));
+#endif
 
       GUARD_CU(deltas.ForEach(
           [] __host__ __device__(ValueT & x) { x = (ValueT)0.0; }, nodes,
@@ -322,7 +327,7 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
       } else if (target == util::HOST) {
         GUARD_CU(data_slice.bc_values.ForEach(
             h_bc_values,
-            [] __host__ __device__(const ValueT &x, ValueT &h_x) { h_x = x; },
+            [] __host__ __device__(const ValueT &x, ValueT &h_x) { h_x =  x; },
             nodes, util::HOST));
 
         GUARD_CU(data_slice.sigmas.ForEach(
@@ -389,7 +394,8 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
       auto &data_slice = data_slices[gpu][0];
 
       GUARD_CU(data_slice.Init(this->sub_graphs[gpu], this->num_gpus,
-                               this->gpu_idx[gpu], target, this->flag));
+                               //this->gpu_idx[gpu], target, this->flag));
+                               this->gpu_idx[gpu], target, util::DEVICE, this->flag));
     }  // end for (gpu)
 
     for (int gpu = 0; gpu < this->num_gpus; gpu++) {
@@ -409,7 +415,6 @@ struct Problem : ProblemBase<_GraphT, _FLAG> {
    * \return cudaError_t Error message(s), if any
    */
   cudaError_t Reset(VertexT src, util::Location target = util::DEVICE) {
-    std::cout << "Problem->Reset(" << src << ")" << std::endl;
     cudaError_t retval = cudaSuccess;
 
     for (int gpu = 0; gpu < this->num_gpus; ++gpu) {
